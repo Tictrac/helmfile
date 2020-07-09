@@ -1,22 +1,14 @@
-FROM golang:1.10
-
-WORKDIR /go/src/app
-COPY . .
-
-RUN go get -d -v ./...
-RUN go build -v -o helmfile
-
 FROM debian:stretch
 
 RUN apt-get update && apt-get install -y wget curl git lsb-release sudo
-ENV HELM_VERSION=v2.10.0
-ENV HELM_LOCATION="https://kubernetes-helm.storage.googleapis.com"
+#https://get.helm.sh/helm-v3.2.1-linux-amd64.tar.gz
+ENV KUBECTL_VERSION=v1.16.0
+ENV HELM_VERSION=v3.2.1
+ENV HELM_LOCATION="https://get.helm.sh"
 ENV HELM_FILENAME="helm-${HELM_VERSION}-linux-amd64.tar.gz"
 RUN wget ${HELM_LOCATION}/${HELM_FILENAME} && \
     tar zxf ${HELM_FILENAME} && mv /linux-amd64/helm /usr/local/bin/ && \
     rm ${HELM_FILENAME} && rm -r /linux-amd64
-
-COPY --from=0 /go/src/app/helmfile /usr/local/bin/helmfile
 
 RUN mkdir -p $(helm home)/plugins
 RUN helm plugin install https://github.com/databus23/helm-diff --version 2.10.0+1
@@ -27,9 +19,8 @@ RUN helm plugin install https://github.com/databus23/helm-diff --version 2.10.0+
 ####work around distro detection
 RUN helm plugin install https://github.com/futuresimple/helm-secrets
 
-ADD https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl /usr/local/bin/kubectl
+ADD https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl /usr/local/bin/kubectl
 RUN chmod +x /usr/local/bin/kubectl
 
 
-#ENTRYPOINT ["/usr/local/bin/helmfile"]
-CMD ["helmfile"]
+CMD ["helm"]
